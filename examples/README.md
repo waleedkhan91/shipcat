@@ -75,7 +75,7 @@ Note that the `webapp` example requires external dependencies which you can conf
 Secrets are resolved from `vault`, so let's install a sample backend using `docker`:
 
 ```sh
-docker run --cap-add=IPC_LOCK -e 'VAULT_DEV_ROOT_TOKEN_ID=myroot' -e 'VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200' -p 8200:8200 -d --rm --name vault vault:0.11.3
+sudo docker run --cap-add=IPC_LOCK -e 'VAULT_ADDR=http://127.0.0.1:8200' -e 'VAULT_TOKEN=myroot' -e 'VAULT_DEV_ROOT_TOKEN_ID=myroot' -e 'VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200' -p 8200:8200 -d --rm --name vault vault:0.11.3
 export VAULT_ADDR=http://127.0.0.1:8200
 export VAULT_TOKEN=myroot
 vault secrets disable secret
@@ -86,13 +86,14 @@ vault secrets enable -version=1 -path=secret kv
 The `webapp` service relies on having a database. If you want to supply your own working `DATABASE_URL` in vault further down, you can do so yourself. Here is how to do it with [helm 3](https://github.com/helm/helm/releases):
 
 ```sh
-helm install --set postgresqlPassword=pw,postgresqlDatabase=webapp -n=webapp-pg stable/postgresql
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install postgresql -n=webapp-pg bitnami/postgresql --version 12.1.4 --set global.postgresql.auth.postgresPassword=pw,global.postgresql.auth.database=webapp,primary.persistence.enabled=false
 ```
 
 Then we can write the external `DATABASE_URL` for `webapp`:
 
 ```sh
-vault write secret/example/webapp/DATABASE_URL value=postgres://postgres:pw@webapp-pg-postgresql.apps/webapp
+vault write secret/example/webapp/DATABASE_URL value=postgres://postgres:pw@postgresql.webapp-pg:5432/webappvault write secret/example/webapp/DATABASE_URL value=postgres://postgres:pw@postgresql.webapp-pg:5432/webapp
 ```
 
 You can verify that `shipcat` picks up on this via: `shipcat values -s webapp`.
