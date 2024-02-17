@@ -16,11 +16,9 @@ spec:
     targetPort: {{ .Values.httpPort }}
     protocol: TCP
     name: http
-{{- if (.Values.health.port) and (not (eq .Values.health.port .Values.httpPort)) }}
-  - port: {{ .Values.health.port }}
+  - port: 8080
     protocol: TCP
     name: health
-{{- end }}
 {{- range $p := .Values.ports }}
   - port: {{ $p.port }}
     protocol: {{ $p.protocol }}
